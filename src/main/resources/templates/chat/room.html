@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:data-th="http://www.thymeleaf.org/extras/dataattributes">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="/webjars/jquery/dist/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/1.6.1/dist/sockjs.min.js"></script>
+
+</head>
+<body>
+    <h1 th:text="${room.name} + ' (' + ${room.id} + ')'"></h1>
+    <div class="content" data-room-id="${room.id}" data-member="${member}">
+        <ul class="chat_box"></ul>
+        <input name="message" th:value="${message}">
+        <button class="send">보내기</button>
+</div>
+<script>
+    $(function() {
+        const chatBox = $('.chat_box');
+        const messageInput = $('input[name="message"]');
+        const sendBtn = $('.send');
+        const roomId = $('.content').data('room-id');
+        const member = $('.content').data('member');
+
+        //handshake
+        const socket = new SockJS("/ws/chat"); //endpoint
+
+        //onopen : connection이 맺어지면 실행되는  callback 함수
+        socket.onopen = () => {
+            // send : connection으로 message 전달
+            // connection이 맺어진 후 가입(JOIN) 메시지 전달
+            socket.send(JSON.stringify({
+                chatRoomId : roomId,
+                type : 'JOIN',
+                writer : member
+            }));
+
+            // onmessage : 소켓에서 message를 받았을 때 실행되는 callback
+            // e.data로 정보가 수신됨
+            socket.onmessage = e => {
+                const content = JSON.parse(e.data);
+                chatBox.append('<li>'+ content.message +'(' + content.writer + ')</li>')
+            }
+        }
+
+
+        //메시지전송 이벤트
+        sendBtn.click(() => {
+            const message = messageInput.val();
+            socket.send(JSON.stringify({
+                chatRoomId : roomId,
+                type : 'CHAT',
+                message : message,
+                writer : messageInput.val('')
+            }));
+        });
+
+    })
+    
+    
+</script>
+</body>
+</html>
