@@ -2,6 +2,7 @@ package com.example.demochat.handler;
 
 import com.example.demochat.domain.ChatMessage;
 import com.example.demochat.domain.ChatRoom;
+import com.example.demochat.domain.MessageType;
 import com.example.demochat.repository.ChatRoomRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import java.io.IOException;
 
 
 @Component
@@ -35,15 +38,14 @@ public class ChatHandler extends TextWebSocketHandler {
         log.info("payload={}", payload);
 
         ChatMessage chatMessage = objectMapper.readValue(payload, ChatMessage.class);
-        ChatRoom chatRoom = repository.getChatRoom(chatMessage.getChatRoomId());
 
+        ChatRoom chatRoom = repository.getChatRoom(chatMessage.getChatRoomId());
         log.info("chatRoom={}",chatRoom);
         chatRoom.handleMessage(session, chatMessage, objectMapper); //handleMessage에서 chatRoom에 세션 등 저장
 
         //여기서 저장된 다음 다시 chatRoom 로그찍어보면 윗 줄이랑 상태가 다르겠지
-        ChatRoom chatRoomCheck = repository.getChatRoom(chatMessage.getChatRoomId());
-        log.info("chatRoomCheck={}",chatRoomCheck);
-
+//        ChatRoom chatRoomCheck = repository.getChatRoom(chatMessage.getChatRoomId());
+//        log.info("chatRoomCheck={}",chatRoomCheck);
 
     }
 
@@ -57,7 +59,7 @@ public class ChatHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        super.afterConnectionClosed(session, status);
+        repository.remove(session);
         log.info("웹소켓 커넥션 종료!");
     }
 }

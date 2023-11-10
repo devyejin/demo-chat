@@ -3,6 +3,7 @@ package com.example.demochat.repository;
 import com.example.demochat.domain.ChatRoom;
 import lombok.Getter;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,4 +36,7 @@ public class ChatRoomRepository {
         return chatRoomMap.get(id);
     }
 
+    public void remove(WebSocketSession session) {
+        this.chatRooms.parallelStream().forEach(chatRoom -> chatRoom.remove(session));
+    }
 }

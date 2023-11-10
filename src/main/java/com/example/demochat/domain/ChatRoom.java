@@ -1,7 +1,6 @@
 package com.example.demochat.domain;
 
 import com.example.demochat.utils.MessageSendUtils;
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
@@ -10,10 +9,10 @@ import lombok.ToString;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
 
 @Getter
 @ToString
@@ -41,9 +40,23 @@ public class ChatRoom {
             chatMessage.setMessage(chatMessage.getWriter() + "님이 입장하셨습니다."); //클라이언트로 메시지 전달 (ChatMessage객체 이용)
         }
 
-        send(chatMessage, objectMapper);
+        if(chatMessage.getType() == MessageType.LEAVE) {
+            remove(session);
+//            session.sendMessage(new TextMessage("/chat/rooms")); //나간 사용자한테 전송(리다이렉트) <- 이 로직에서 예외처리 필요해서 Utils로 뺀거 이용
+            String path = "/chat/rooms";
+            try {
+                MessageSendUtils.sendMessage(session, new TextMessage(objectMapper.writeValueAsString(path)));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            chatMessage.setMessage(chatMessage.getWriter() + "님이 퇴장하였습니다.");
+        }
+
+        send(chatMessage, objectMapper); //나머지 브로드캐스트
     }
 
+    //브로드 캐스트로 구현된 상태
     private <T> void send(T messageObject, ObjectMapper objectMapper) {
         try {
             TextMessage message = new TextMessage(objectMapper.writeValueAsString(messageObject));
@@ -58,7 +71,11 @@ public class ChatRoom {
     }
 
 
-    //메시지 삭제
+    //퇴장
+    public void remove(WebSocketSession target) {
+        String targetId = target.getId();
+        sessions.removeIf(session -> session.getId().equals(targetId));
+    }
 
 
 }
