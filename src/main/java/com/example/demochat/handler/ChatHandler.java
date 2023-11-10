@@ -32,11 +32,19 @@ public class ChatHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
-//        log.info("payload={}", payload);
+        log.info("payload={}", payload);
 
         ChatMessage chatMessage = objectMapper.readValue(payload, ChatMessage.class);
         ChatRoom chatRoom = repository.getChatRoom(chatMessage.getChatRoomId());
-        chatRoom.handleMessage(session, chatMessage, objectMapper);
+
+        log.info("chatRoom={}",chatRoom);
+        chatRoom.handleMessage(session, chatMessage, objectMapper); //handleMessage에서 chatRoom에 세션 등 저장
+
+        //여기서 저장된 다음 다시 chatRoom 로그찍어보면 윗 줄이랑 상태가 다르겠지
+        ChatRoom chatRoomCheck = repository.getChatRoom(chatMessage.getChatRoomId());
+        log.info("chatRoomCheck={}",chatRoomCheck);
+
+
     }
 
     //3-way-handshake 후 connection이 맺어진 다음 실행되는 메서드
@@ -44,6 +52,7 @@ public class ChatHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         super.afterConnectionEstablished(session);
         log.info("3-way-handshake 후 connection 맺어짐!");
+        log.info("session={}", session);
     }
 
     @Override

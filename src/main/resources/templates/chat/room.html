@@ -10,7 +10,7 @@
 </head>
 <body>
     <h1 th:text="${room.name} + ' (' + ${room.id} + ')'"></h1>
-    <div class="content" data-room-id="${room.id}" data-member="${member}">
+    <div class="content" th:data-room-id="${room.id}" th:data-member="${member}">
         <ul class="chat_box"></ul>
         <input name="message" th:value="${message}">
         <button class="send">보내기</button>
@@ -20,8 +20,12 @@
         const chatBox = $('.chat_box');
         const messageInput = $('input[name="message"]');
         const sendBtn = $('.send');
-        const roomId = $('.content').data('room-id');
-        const member = $('.content').data('member');
+        const content = $('.content')
+        const roomId = content.data('room-id');
+        const member = content.data('member');
+
+        console.log(roomId);
+        console.log(member);
 
         //handshake
         const socket = new SockJS("/ws/chat"); //endpoint
@@ -52,7 +56,7 @@
                 chatRoomId : roomId,
                 type : 'CHAT',
                 message : message,
-                writer : messageInput.val('')
+                writer : member
             }));
         });
 
